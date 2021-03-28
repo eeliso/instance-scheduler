@@ -1,0 +1,6 @@
+title: Compute Instance Starter and Stopper
+description: Used by Cloud Functions to Start and Stop Compute Engine instances
+stage: alpha
+includedPermissions:
+- compute.instances.start
+- compute.instances.stop
