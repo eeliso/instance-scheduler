@@ -40,7 +40,7 @@ echo "What is the VM instance name you want to control?: "
 read name
 
 # Create functions for starting and stopping (http authenticated)
-gcloud functions deploy start --entry-point start \
+yes n | gcloud functions deploy start --entry-point start \
     --memory 128MB \
     --runtime python38 \
     --service-account $function_sa \
@@ -48,7 +48,8 @@ gcloud functions deploy start --entry-point start \
     --trigger-http \
     --region europe-west1
 
-gcloud functions deploy stop --entry-point stop \
+
+yes n gcloud functions deploy stop --entry-point stop \
     --memory 128MB \
     --runtime python38 \
     --service-account $function_sa \
