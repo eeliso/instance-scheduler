@@ -1,4 +1,5 @@
 #!/bin/sh
+
 # Enable apis
 gcloud services enable cloudbuild.googleapis.com
 gcloud services enable cloudfunctions.googleapis.com
@@ -7,12 +8,19 @@ gcloud services enable cloudscheduler.googleapis.com
 
 
 
-# Create Cloud Functions Service Account
+# Create Service Accounts
 gcloud iam service-accounts create instance-cost-saver \
     --description="Used to turn VM's on and off" \
     --display-name="instance-cost-saver"
 
-function_sa = $(gcloud iam service-accounts list --filter=instance-cost-saver --format="value(email)")
+
+gcloud iam service-accounts create instance-scheduler-auth \
+    --description="Used to authenticate instance schedules" \
+    --display-name="instance-scheduler-auth"
+
+
+function_sa=$(gcloud iam service-accounts list --filter=instance-cost-saver --format="value(email)")
+scheduler_sa=$(gcloud iam service-accounts list --filter=instance-scheduler-auth --format="value(email)")
 project=$(gcloud config get-value project)
 projectnumber=$(gcloud projects describe $project --format='value(projectNumber)')
 
@@ -24,9 +32,6 @@ gcloud projects add-iam-policy-binding $project \
     --member="serviceAccount:$function_sa" \
     --role="projects/$project/roles/ComputeStartStop"
 
-gcloud projects add-iam-policy-binding $project \
-    --member serviceAccount:service-$projectnumber@gcp-sa-cloudscheduler.iam.gserviceaccount.com \
-     --role roles/cloudscheduler.serviceAgent
 
 # Ask for zone and instance to control (Add validation to both of these?)
 echo "What zone is the VM you want to control in?: "
@@ -54,6 +59,16 @@ gcloud functions deploy stop --entry-point stop \
 starturl=$(gcloud functions describe start --region europe-west1 --format="value(httpsTrigger.url)")
 stopurl=$(gcloud functions describe stop --region europe-west1 --format="value(httpsTrigger.url)")
 
+gcloud functions add-iam-policy-binding start \
+    --region europe-west1 \
+    --member serviceAccount:$scheduler_sa \
+    --role roles/cloudfunctions.invoker
+
+gcloud functions add-iam-policy-binding stop \
+    --region europe-west1 \
+    --member serviceAccount:$scheduler_sa \
+    --role roles/cloudfunctions.invoker
+
 
 
 # Create Scheduler jobs with asked variables in payload (application/json as type?)
@@ -62,13 +77,12 @@ gcloud scheduler jobs create http startcall \
     --uri="$starturl" \
     --time-zone="Europe/Helsinki" \
     --message-body="{\"project\":\"$project\",\"zone\":\"$zone\",\"name\":\"$name\"}" \
-    --headers="Content-Type: application/json" \
-    --oidc-service-account-email="$function_sa"
+    --oidc-service-account-email="$scheduler_sa"
 
 gcloud scheduler jobs create http stopcall \
     --schedule="0 17 * * 1-5" \
     --uri="$stopurl" \
     --time-zone="Europe/Helsinki" \
     --message-body="{\"project\":\"$project\",\"zone\":\"$zone\",\"name\":\"$name\"}" \
-    --headers="Content-Type: application/json" \
-    --oidc-service-account-email="$function_sa"
+    --headers Content-Type=application/json \
+    --oidc-service-account-email="$scheduler_sa"
