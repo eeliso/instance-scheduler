@@ -18,6 +18,8 @@ gcloud iam service-accounts create instance-scheduler-auth \
     --description="Used to authenticate instance schedules" \
     --display-name="instance-scheduler-auth"
 
+# Wait for service accounts to be listable.
+sleep 20s
 
 function_sa=$(gcloud iam service-accounts list --filter=instance-cost-saver --format="value(email)")
 scheduler_sa=$(gcloud iam service-accounts list --filter=instance-scheduler-auth --format="value(email)")
@@ -86,3 +88,4 @@ gcloud scheduler jobs create http stopcall \
     --time-zone="Europe/Helsinki" \
     --message-body="{\"project\":\"$project\",\"zone\":\"$zone\",\"name\":\"$name\"}" \
     --oidc-service-account-email="$scheduler_sa"
+

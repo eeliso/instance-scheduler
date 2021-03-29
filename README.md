@@ -9,3 +9,12 @@ The solution does the following:
 5. Creates Cloud Scheduler Jobs that send the payload information about the instance being targeted by the start or stop function.
 
 To run deploy.sh, first git clone this repository to a local folder.
+
+Current cons:
+
+ - Quite large IAM permissions in project required to run the script (owner or quite near it)
+ - One scheduled job only controls one instance. You can have more jobs if you want to control more instances
+
+Future improvements: 
+
+ - Control targets with specific labels instead of instance names (one job could handle schedules for several instances)
