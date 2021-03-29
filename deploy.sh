@@ -84,5 +84,4 @@ gcloud scheduler jobs create http stopcall \
     --uri="$stopurl" \
     --time-zone="Europe/Helsinki" \
     --message-body="{\"project\":\"$project\",\"zone\":\"$zone\",\"name\":\"$name\"}" \
-    --headers Content-Type=application/json \
     --oidc-service-account-email="$scheduler_sa"
