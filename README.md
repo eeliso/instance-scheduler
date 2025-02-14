@@ -1,3 +1,5 @@
+## Note that this feature is in-built nowadays within Google Cloud Platform. Look for the instance schedules functionality.
+
 Automating Google Cloud Platform VM's starts and stops
 ---------------
 
